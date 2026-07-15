@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personalized Networking Assistant — Demo</title>
+<style>
+  :root{
+    --bg:#0e1117;
+    --panel:#ffffff;
+    --panel-border:#e6e6e6;
+    --text:#31333f;
+    --muted:#6b7280;
+    --accent:#ff4b4b;
+    --accent-dark:#e03e3e;
+    --chip-bg:#f0f2f6;
+    --good:#16a34a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px;
+  }
+  .frame{
+    width:100%;
+    max-width:760px;
+    background:#1c1f26;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  .browserbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:#20232b;
+  }
+  .dot{width:11px;height:11px;border-radius:50%;}
+  .dot.r{background:#ff5f57;}
+  .dot.y{background:#febc2e;}
+  .dot.g{background:#28c840;}
+  .url{
+    margin-left:12px;
+    background:#12141a;
+    color:#8a8f98;
+    font-size:12px;
+    padding:5px 12px;
+    border-radius:6px;
+    flex:1;
+  }
+  .screen{
+    background:var(--panel);
+    color:var(--text);
+    padding:28px 32px 36px;
+    min-height:520px;
+  }
+  h1.title{
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  p.subtitle{
+    color:var(--muted);
+    margin:0 0 22px;
+    font-size:14px;
+  }
+  .field-label{
+    font-size:13px;
+    font-weight:600;
+    margin:16px 0 6px;
+  }
+  textarea, input[type=text]{
+    width:100%;
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fff;
+  }
+  textarea{height:64px; resize:none;}
+  .btn{
+    margin-top:16px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+    cursor:default;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .btn.pressed{
+    background:var(--accent-dark);
+    transform:scale(0.97);
+  }
+  .cursor{
+    display:inline-block;
+    width:2px;
+    height:1em;
+    background:var(--text);
+    margin-left:1px;
+    vertical-align:-2px;
+    animation:blink 1s step-start infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+  .spinner-row{
+    display:none;
+    align-items:center;
+    gap:10px;
+    margin-top:18px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .spinner-row.show{display:flex;}
+  .spinner{
+    width:16px;height:16px;
+    border:2px solid #e6e6e6;
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .result-block{
+    margin-top:22px;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .result-block.show{opacity:1; transform:translateY(0);}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+  .chip{
+    background:var(--chip-bg);
+    border-radius:14px;
+    padding:5px 12px;
+    font-size:12.5px;
+    color:var(--text);
+  }
+  .suggestion{
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-top:10px;
+    font-size:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+  .suggestion .fb{display:flex; gap:10px; font-size:15px; color:var(--muted);}
+  .suggestion .fb span.active{color:var(--good);}
+  .divider{
+    border:none;
+    border-top:1px solid var(--panel-border);
+    margin:28px 0 18px;
+  }
+  .history-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    padding:8px 0;
+    border-bottom:1px solid #f1f1f1;
+  }
+  .history-row .desc{color:var(--text);}
+  .history-row .time{color:var(--muted);}
+  .caption{
+    background:#12141a;
+    color:#c9cdd3;
+    font-size:13px;
+    padding:10px 16px;
+    min-height:18px;
+  }
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 16px 16px;
+    background:#20232b;
+  }
+  .ctrl-btn{
+    background:#2c303a;
+    color:#e6e6e6;
+    border:none;
+    padding:7px 14px;
+    border-radius:7px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .ctrl-btn:hover{background:#383d49;}
+  .progress{
+    flex:1;
+    height:4px;
+    background:#2c303a;
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .progress-bar{
+    height:100%;
+    width:0%;
+    background:var(--accent);
+    transition:width .3s linear;
+  }
+  .fact-answer{
+    margin-top:10px;
+    font-size:13.5px;
+    background:var(--chip-bg);
+    border-radius:8px;
+    padding:12px 14px;
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="browserbar">
+    <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+    <div class="url">localhost:8501</div>
+  </div>
+
+  <div class="screen">
+    <h1 class="title">🤝 Personalized Networking Assistant</h1>
+    <p class="subtitle">Generate conversation starters for networking events based on your interests.</p>
+
+    <div class="field-label">📝 Enter Event Description</div>
+    <textarea id="descField" readonly></textarea>
+
+    <div class="field-label">🎯 Your Interests (comma-separated)</div>
+    <input id="interestsField" type="text" readonly>
+
+    <button class="btn" id="genBtn">Generate Conversation Starters</button>
+
+    <div class="spinner-row" id="spinner1"><div class="spinner"></div><span>Analyzing event & generating suggestions…</span></div>
+
+    <div class="result-block" id="resultBlock">
+      <div class="field-label">Extracted Themes</div>
+      <div class="chips" id="chips"></div>
+
+      <div class="field-label" style="margin-top:18px;">Suggested Conversation Starters</div>
+      <div id="suggestions"></div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="field-label">🔎 Quick Fact Check</div>
+    <input id="factField" type="text" readonly>
+    <button class="btn" id="factBtn" style="margin-top:10px;">Fact Check</button>
+    <div class="spinner-row" id="spinner2"><div class="spinner"></div><span>Looking up Wikipedia summary…</span></div>
+    <div class="result-block" id="factResultBlock">
+      <div class="fact-answer" id="factAnswer"></div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="field-label">🕘 History</div>
+    <div class="result-block" id="historyBlock">
+      <div class="history-row"><span class="desc">AI for Sustainable Cities</span><span class="time">2 days ago</span></div>
+      <div class="history-row"><span class="desc">Future of Digital Health</span><span class="time">5 days ago</span></div>
+      <div class="history-row" id="liveHistoryRow" style="display:none;"><span class="desc">AI for Sustainable Cities</span><span class="time">just now</span></div>
+    </div>
+  </div>
+
+  <div class="caption" id="caption">Press play to start the demo</div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="playBtn">▶ Play</button>
+    <button class="ctrl-btn" id="replayBtn">⟲ Replay</button>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  </div>
+</div>
+
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let cancelToken = { cancelled: false };
+
+async function typeInto(el, text, speed=35){
+  el.value = "";
+  for(const ch of text){
+    if(cancelToken.cancelled) return;
+    el.value += ch;
+    await sleep(speed);
+  }
+}
+
+function setCaption(text){
+  document.getElementById('caption').textContent = text;
+}
+
+function press(btn){
+  return new Promise(async res => {
+    btn.classList.add('pressed');
+    await sleep(180);
+    btn.classList.remove('pressed');
+    res();
+  });
+}
+
+async function runDemo(token){
+  const steps = 8;
+  let step = 0;
+  const bar = document.getElementById('progressBar');
+  const advance = () => { step++; bar.style.width = (step/steps*100)+'%'; };
+
+  // reset UI
+  document.getElementById('descField').value = '';
+  document.getElementById('interestsField').value = '';
+  document.getElementById('factField').value = '';
+  document.getElementById('resultBlock').classList.remove('show');
+  document.getElementById('factResultBlock').classList.remove('show');
+  document.getElementById('spinner1').classList.remove('show');
+  document.getElementById('spinner2').classList.remove('show');
+  document.getElementById('chips').innerHTML = '';
+  document.getElementById('suggestions').innerHTML = '';
+  document.getElementById('factAnswer').textContent = '';
+  document.getElementById('liveHistoryRow').style.display = 'none';
+  bar.style.width = '0%';
+
+  setCaption('Step 1/8 — Typing the event description…');
+  await typeInto(document.getElementById('descField'), 'AI for Sustainable Cities');
+  if(token.cancelled) return;
+  advance();
+  await sleep(500);
+
+  setCaption('Step 2/8 — Adding personal interests…');
+  await typeInto(document.getElementById('interestsField'), 'climate change, urban planning');
+  if(token.cancelled) return;
+  advance();
+  await sleep(500);
+
+  setCaption('Step 3/8 — Clicking "Generate Conversation Starters"…');
+  await press(document.getElementById('genBtn'));
+  document.getElementById('spinner1').classList.add('show');
+  advance();
+  await sleep(1400);
+  if(token.cancelled) return;
+  document.getElementById('spinner1').classList.remove('show');
+
+  setCaption('Step 4/8 — Zero-shot classifier extracts event themes…');
+  const chipsEl = document.getElementById('chips');
+  ['AI','sustainability','education'].forEach(t => {
+    const c = document.createElement('div');
+    c.className = 'chip'; c.textContent = t;
+    chipsEl.appendChild(c);
+  });
+  document.getElementById('resultBlock').classList.add('show');
+  advance();
+  await sleep(1000);
+  if(token.cancelled) return;
+
+  setCaption('Step 5/8 — GPT-2 generates tailored conversation starters…');
+  const suggestions = [
+    "What's one project you've seen that actually made a city greener — not just greener on paper?",
+    "If urban planning could borrow one trick from nature, what should it steal?",
+    "Climate targets are everywhere at events like this — which one do you think a city like ours could actually hit?"
+  ];
+  const suggEl = document.getElementById('suggestions');
+  for(const s of suggestions){
+    if(token.cancelled) return;
+    const row = document.createElement('div');
+    row.className = 'suggestion';
+    row.innerHTML = `<span>${s}</span><span class="fb"><span>👍</span><span>👎</span></span>`;
+    suggEl.appendChild(row);
+    await sleep(500);
+  }
+  advance();
+  await sleep(800);
+  if(token.cancelled) return;
+
+  setCaption('Step 6/8 — Marking a suggestion as useful (logged to feedback.json)…');
+  const firstFb = suggEl.querySelector('.suggestion .fb span');
+  firstFb.classList.add('active');
+  await sleep(900);
+  advance();
+
+  setCaption('Step 7/8 — Running a quick Wikipedia fact-check…');
+  await typeInto(document.getElementById('factField'), 'blockchain in healthcare');
+  if(token.cancelled) return;
+  await press(document.getElementById('factBtn'));
+  document.getElementById('spinner2').classList.add('show');
+  await sleep(1200);
+  if(token.cancelled) return;
+  document.getElementById('spinner2').classList.remove('show');
+  document.getElementById('factAnswer').textContent =
+    'Blockchain in healthcare refers to distributed-ledger systems used to securely share patient records, verify drug supply chains, and manage consent — summary pulled live from Wikipedia.';
+  document.getElementById('factResultBlock').classList.add('show');
+  advance();
+  await sleep(1000);
+  if(token.cancelled) return;
+
+  setCaption('Step 8/8 — Conversation automatically saved to History (history.json)…');
+  document.getElementById('liveHistoryRow').style.display = 'flex';
+  advance();
+  await sleep(1200);
+
+  setCaption('Demo complete — press Replay to watch again');
+}
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  cancelToken.cancelled = true;
+  cancelToken = { cancelled: false };
+  runDemo(cancelToken);
+});
+document.getElementById('replayBtn').addEventListener('click', () => {
+  cancelToken.cancelled = true;
+  cancelToken = { cancelled: false };
+  runDemo(cancelToken);
+});
+
+// autoplay on load
+const startToken = cancelToken;
+runDemo(startToken);
+</script>
+</body>
+</html>
